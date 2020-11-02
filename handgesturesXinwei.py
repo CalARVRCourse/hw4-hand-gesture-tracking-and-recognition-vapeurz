@@ -406,7 +406,7 @@ while True:
        handArea = cv2.contourArea(largestContour)
        hullArea = cv2.contourArea(hull)
        hull = cv2.convexHull(largestContour, returnPoints = False)
-       ratio = (hullArea - handArea/handArea)/100
+       ratio = ((hullArea - handArea)/handArea)
        
        #for part 4
        
@@ -456,9 +456,13 @@ while True:
         fingerCount +=1
         cv2.putText(thresholdedHandImage, "finger count = %d" %(fingerCount), 
                                     (50,100), font, 1.0, (255, 255, 255), 2)
-        
-    else:
-        cv2.putText(thresholdedHandImage, "no finger detected",
+    elif(fingerCount==0):
+        #print ("ratio = %f" %(ratio))
+        if ratio > 0.1:
+            cv2.putText(thresholdedHandImage, "finger count = %d" %(1), 
+                                    (50,100), font, 1.0, (255, 255, 255), 2)
+        else:
+            cv2.putText(thresholdedHandImage, "no finger detected",
                     (50,100), font, 1.0, (255, 255, 255), 2)
     
     #cv2.imshow("after heuristic", thresholdedHandImage)

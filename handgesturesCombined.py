@@ -416,7 +416,7 @@ while True:
        handArea = cv2.contourArea(largestContour)
        hullArea = cv2.contourArea(hull)
        hull = cv2.convexHull(largestContour, returnPoints = False)
-       ratio = (hullArea - handArea/handArea)/100
+       ratio = ((hullArea - handArea)/handArea)
        
        #for part 4
        
@@ -462,13 +462,18 @@ while True:
     #cv2.imshow("labeled image", labeled_img)
     #cv2.imshow("before heuristic", thresholdedHandImgBefore)
     
+    
     if(fingerCount !=0):
         fingerCount +=1
         cv2.putText(thresholdedHandImage, "finger count = %d" %(fingerCount), 
                                     (50,100), font, 1.0, (255, 255, 255), 2)
-        
-    else:
-        cv2.putText(thresholdedHandImage, "no finger detected",
+    elif(fingerCount==0):
+        #print ("ratio = %f" %(ratio))
+        if ratio > 0.1:
+            cv2.putText(thresholdedHandImage, "finger count = %d" %(1), 
+                                    (50,100), font, 1.0, (255, 255, 255), 2)
+        else:
+            cv2.putText(thresholdedHandImage, "no finger detected",
                     (50,100), font, 1.0, (255, 255, 255), 2)
     
     #cv2.imshow("after heuristic", thresholdedHandImage)
@@ -526,13 +531,14 @@ while True:
         
     # 2. Trista
     # simple gestue, use the vertical four gesture to trigger the screenshot
-    (x,y),(MA,ma),angle = cv2.fitEllipse(cnt)  
-    for angle in (113,118):
-        if fingerCount == 4:
-            screenShot += 1
-            im1 = pyautogui.screenshot('my_screenshot_%d.png'%(screenShot))
-            cv2.putText(final, "Picture captured", \
-                        (50,300), font, 0.8, (255, 255, 0), 2)    
+    if (len(cnt)>5):
+        (x,y),(MA,ma),angle = cv2.fitEllipse(cnt)  
+        for angle in (113,118):
+            if fingerCount == 4:
+                screenShot += 1
+                im1 = pyautogui.screenshot('my_screenshot_%d.png'%(screenShot))
+                cv2.putText(final, "Picture captured", \
+                            (50,300), font, 0.8, (255, 255, 0), 2)    
                 
                 
     # 3. Bethany: navigating mouse accourding to hand 
@@ -614,33 +620,34 @@ while True:
     # When I rotate my fingers left with two fingers attached, then turn the volume up
     # When I rotate my fingers right with two fingers attached, then turn the volume down
     
-    (x,y),(MA,ma),angle = cv2.fitEllipse(cnt)  
-    preangle = 0
-    preMA = 0
-    prema = 0
-    multiFrameAngle2 = []
-    frameThres = 20
-
-    if (len(multiFrameAngle2) < frameThres):
-        if (fingerCount ==2):
-            multiFrameAngle2.append(angle)
-    elif (len(multiFrameAngle2) == frameThres):
-        if (fingerCount ==2):
-            preangle = angle
-            preMA = MA
-            prema = ma
-            averageAngle =np.average(multiFrameAngle2)
-   
-        if preangle in (14,17) and preMA/prema in(0.7,0.75):
-            if angle in (80,85) and MA/ma in(0.55,0.6):
-                pyautogui.press('F12')  
-                cv2.putText(final, "Volume Up" , 
-                                (50,300), font, 0.8, (255, 255, 0), 2)
-            
-            elif angle in (25,35) and MA/ma in(0.3,0.35):
-                pyautogui.hotkey('F11')  
-                cv2.putText(final, "Volume Down" , 
-                                (50,300), font, 0.8, (255, 255, 0), 2)
+    if (len(cnt)>5):
+        (x,y),(MA,ma),angle = cv2.fitEllipse(cnt)  
+        preangle = 0
+        preMA = 0
+        prema = 0
+        multiFrameAngle2 = []
+        frameThres = 20
+    
+        if (len(multiFrameAngle2) < frameThres):
+            if (fingerCount ==2):
+                multiFrameAngle2.append(angle)
+        elif (len(multiFrameAngle2) == frameThres):
+            if (fingerCount ==2):
+                preangle = angle
+                preMA = MA
+                prema = ma
+                averageAngle =np.average(multiFrameAngle2)
+       
+            if preangle in (14,17) and preMA/prema in(0.7,0.75):
+                if angle in (80,85) and MA/ma in(0.55,0.6):
+                    pyautogui.press('F12')  
+                    cv2.putText(final, "Volume Up" , 
+                                    (50,300), font, 0.8, (255, 255, 0), 2)
+                
+                elif angle in (25,35) and MA/ma in(0.3,0.35):
+                    pyautogui.hotkey('F11')  
+                    cv2.putText(final, "Volume Down" , 
+                                    (50,300), font, 0.8, (255, 255, 0), 2)
     
     
     
