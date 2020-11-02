@@ -3,6 +3,14 @@
 Created on Sun Oct 25 18:12:28 2020
 
 @author: xinwei
+
+Our group did part 1-3 individually,
+So I didn't combine them here
+But used Xinwei's code for part 1-3
+
+The part 4 is a collaborated work from 
+Xinwei Zhuang, Trista Hu and Bethany Lu
+
 """
 
 from __future__ import print_function
@@ -196,6 +204,8 @@ multiFrameScroll = []
 multiFrameOK = []
 multiFrameAngle = []
 multiFrameCount = 0
+
+#for part 4 Bethany
 previous = 0
 count = 0
 
@@ -513,7 +523,7 @@ while True:
     cX = offsetX + scaleX *int(M["m10"] / M["m00"])  
     cY = offsetY + scaleY *int(M["m01"] / M["m00"])  
     
-    '''
+        
     # 2. Trista
     # simple gestue, use the vertical four gesture to trigger the screenshot
     (x,y),(MA,ma),angle = cv2.fitEllipse(cnt)  
@@ -534,7 +544,7 @@ while True:
     cX = offsetX + scaleX *int(M["m10"] / M["m00"])  
     cY = offsetY + scaleY *int(M["m01"] / M["m00"])  
     pyautogui.moveTo(cX, cY, duration=0.001)
-    '''
+
 
     '''
     ##################
@@ -542,16 +552,13 @@ while True:
     ##################
     '''
     # Complex gestures
-
+    t = 50
 
     # 1. Xinwei
     # if finger is 2, and the position of the finger goes down
     # scroll down the screen
     # if the ellipse' y value goes down, scroll down
 
-
-    t = 50
-    
     if (len(multiFrameScroll) < frameThres):
         if (fingerCount ==4):
             multiFrameScroll.append(cY)
@@ -567,7 +574,7 @@ while True:
                 pyautogui.scroll(-30)
                 cv2.putText(final, "4 fingers for scroll down" , 
                                         (50,150), font, 1.0, (255, 255, 255), 1)
-      
+        
         
     #2. Xinwei
     # if finger is two and ange angle between two fingers increases
@@ -601,7 +608,7 @@ while True:
             else:
                 multiFrameAngle[multiFrameCount]=currentAngle
             
-    '''
+    
     # 3. Trista
     # I start from the use "yeah" gesture. \
     # When I rotate my fingers left with two fingers attached, then turn the volume up
@@ -614,7 +621,6 @@ while True:
     multiFrameAngle2 = []
     frameThres = 20
 
-    tAngle = 0.2
     if (len(multiFrameAngle2) < frameThres):
         if (fingerCount ==2):
             multiFrameAngle2.append(angle)
@@ -650,7 +656,7 @@ while True:
             escPressed = True
     count += 1
     previous = fingerCount
-    '''
+    
     
     c = c+1
     
