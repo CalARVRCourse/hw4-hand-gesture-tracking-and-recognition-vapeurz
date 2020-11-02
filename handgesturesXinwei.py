@@ -34,7 +34,11 @@ x0 =300
 y0= 200
 width = 800
 height = 1000
+
+
+#for part 4
 screenShot = 0
+storedAngle = 0
 
 def nothing(x):
     pass
@@ -51,6 +55,9 @@ def calculateSkinMask(frame):
     convertedYCrCb = cv2.cvtColor(frame, cv2.COLOR_BGR2YCrCb)
     skinMaskYCrCb = cv2.inRange(convertedYCrCb, lower_YCrCb, upper_YCrCb)
     skinMask = cv2.add(skinMaskHSV,skinMaskYCrCb)
+    
+    
+
     
     '''
     #this is too slow!
@@ -69,6 +76,13 @@ def calculateSkinMask(frame):
     
     return skinMask
 
+def calculateSkinMask2(frame):
+    YCrCb = cv2.cvtColor(frame, cv2.COLOR_BGR2YCR_CB)
+    (y,cr,cb) = cv2.split(YCrCb) 
+    cr1 = cv2.GaussianBlur(cr, (5,5), 0)
+    _, skin = cv2.threshold(cr1, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU) #Ostu处理
+    #res = cv2.bitwise_and(frame,frame, mask = skin)
+    return skin
 
 #for part 4 def position down
 def isDecreased(current, previous, thres):
@@ -180,6 +194,8 @@ cv2.createTrackbar('Contours', window_name,0,1,nothing)
 #for gesture part 4
 multiFrameScroll = []
 multiFrameOK = []
+multiFrameAngle = []
+multiFrameCount = 0
 
 while True:
     ret, frame = cam.read()
@@ -208,6 +224,7 @@ while True:
         if findContours:
             _, contours, hierarchy = cv2.findContours( blur, cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE )
             blur = cv2.cvtColor(blur, cv2.COLOR_GRAY2BGR)  #add this line
+
             output = cv2.drawContours(blur, contours, -1, (0, 255, 0), 1)
             print(str(len(contours))+"\n")
         else:
@@ -232,8 +249,8 @@ while True:
     frame= frame[y0:y0+height, x0:x0+width]
     #cv2.imshow("roi", tmpROI)
     skinMask = calculateSkinMask(frame)
-
     
+    skinMask2 = calculateSkinMask2(frame)
     
     #res = cv2.bitwise_and(frame,frame, mask = skinMask) 
     
@@ -243,16 +260,23 @@ while True:
     skinMask = cv2.erode(skinMask, kernel, iterations = 2)
     skinMask = cv2.dilate(skinMask, kernel, iterations = 2)
     
+    skinMask2 = cv2.erode(skinMask2, kernel, iterations = 2)
+    skinMask2 = cv2.dilate(skinMask2, kernel, iterations = 2)
+    
     #Gaussian blur
     skinMask = cv2.GaussianBlur(skinMask, (3,3), 0)
+    skinMask2 = cv2.GaussianBlur(skinMask2, (3,3), 0)
     #_, skinTmp = cv2.threshold(skinMaskBlur, 0, max_binary_value, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
    
     skin = cv2.bitwise_and(frame, frame, mask = skinMask)
+    skin2 = cv2.bitwise_and(frame,frame, mask = skinMask2)
     #cv2.imshow("dst_demo", skin)
     
     #output for part 1
     part1 = cv2.cvtColor(skin,cv2.COLOR_BGR2GRAY)
-    #cv2.imshow("part 1 output", part1)
+    part1_2 = cv2.cvtColor(skin2,cv2.COLOR_BGR2GRAY)
+    cv2.imshow("part 1 output", part1)
+    cv2.imshow("method 2", part1_2)
     '''
     ########################################################################
     PART 2
@@ -417,6 +441,7 @@ while True:
                        fingerCount += 1
                        cv2.line(thresholdedHandImage,start,end,[0,0,255],2) #is this required?
                        cv2.circle(thresholdedHandImage, far, 4, [0, 0, 255], -1)
+                       storedAngle = angle
                    
                    M = cv2.moments(largestContour)
                    #cX = int(M[ "m10" ] / M[ "m00" ])
@@ -434,7 +459,7 @@ while True:
         cv2.putText(thresholdedHandImage, "no finger detected",
                     (50,100), font, 1.0, (255, 255, 255), 2)
     
-    cv2.imshow("after heuristic", thresholdedHandImage)
+    #cv2.imshow("after heuristic", thresholdedHandImage)
     
 
     
@@ -457,13 +482,15 @@ while True:
     #simple gestures
     frameThres = 20
     
+    
+    
     #1. Xinwei: if we have a OK gesture, left click the mouse
     if (len(multiFrameOK) < frameThres):
         if(fingerCount ==2):
             if (len(cnt)>5):
                 (x,y),(MA,ma),angle = cv2.fitEllipse(cnt)
                 if(min(MA,ma)!=0):
-                    cv2.imshow( "ROI " +str(2), subImg)
+                    #cv2.imshow( "ROI " +str(2), subImg)
                     average = max(MA,ma)/min(MA,ma)
                     multiFrameOK.append(average)
     elif (len(multiFrameOK) == frameThres):
@@ -505,23 +532,41 @@ while True:
     
     
     '''
-    #3. Trista: use "yeah" gesture to trigger the screenshot
+    #3. Trista: 
+    # simple gestue, use the vertical four gesture to trigger the screenshot
+    
     (x,y),(MA,ma),angle = cv2.fitEllipse(cnt)  
-    for angle in (14,17):
-        if fingerCount == 2:
+    for angle in (113,118):
+        if fingerCount == 4:
+            im1 = pyautogui.screenshot('my_screenshot1.png')
+            cv2.putText(thresholdedHandImage, "Picture captured", \
+                        (50,300), font, 0.8, (255, 255, 0), 2)  
+    '''
+    
+    # 3. Trista
+    # simple gestue, use the vertical four gesture to trigger the screenshot
+    (x,y),(MA,ma),angle = cv2.fitEllipse(cnt)  
+    for angle in (113,118):
+        if fingerCount == 4:
             screenShot += 1
             im1 = pyautogui.screenshot('my_screenshot_%d.png'%(screenShot))
             cv2.putText(final, "Picture captured", \
-                        (50,300), font, 0.8, (255, 255, 0), 2)   
+                        (50,300), font, 0.8, (255, 255, 0), 2)    
+            
+    
     '''
-        
+    ##################
+    #complex gestures#
+    ##################
+    '''
     # Complex gestures
     # 1. Xinwei
     # if finger is 2, and the position of the finger goes down
     # scroll down the screen
     # if the ellipse' y value goes down, scroll down
-    
     t = 50
+    
+    '''
     if (len(multiFrameScroll) < frameThres):
         if (fingerCount ==4):
             multiFrameScroll.append(cY)
@@ -537,15 +582,78 @@ while True:
                 pyautogui.scroll(-30)
                 cv2.putText(final, "4 fingers for scroll down" , 
                                         (50,150), font, 1.0, (255, 255, 255), 1)
+     '''   
         
-        
-    #2.Bethany: use palm area to 
+    #2. Xinwei
+    # if finger is two and ange angle between two fingers increases
+    # mouse: continuous pressed left 
+    # else: release mouse
+    tAngle = 0.2
+    if (len(multiFrameAngle) < frameThres):
+        if (fingerCount ==2):
+            multiFrameAngle.append(storedAngle)
+    elif (len(multiFrameAngle) == frameThres):
+        if (fingerCount ==2):
+            currentAngle = storedAngle
+            averageAngle =np.average(multiFrameAngle)
+            print("current angle: %f"%(currentAngle))
+            print("averageAngle: %f" %(multiFrameAngle[-3] ))
+            print("====================")
+            
+            multiFrameCount +=1
+            
+            
+            if(isDecreased(currentAngle, multiFrameAngle[-3] , tAngle)):
+                pyautogui.mouseUp()
+                cv2.putText(final, "release mouse" , 
+                                        (50,150), font, 1.0, (255, 255, 255), 1)
+            elif(isIncreased(currentAngle, multiFrameAngle[-3], tAngle)):
+                pyautogui.mouseDown()
+                cv2.putText(final, "press mouse" , 
+                                        (50,150), font, 1.0, (255, 255, 255), 1)
+            if (multiFrameCount==frameThres):
+                multiFrameCount = 0
+            else:
+                multiFrameAngle[multiFrameCount]=currentAngle
+            
+    '''
+    # 3. Trista
+    # I start from the use "yeah" gesture. \
+    # When I rotate my fingers left with two fingers attached, then turn the volume up
+    # When I rotate my fingers right with two fingers attached, then turn the volume down
     
+    (x,y),(MA,ma),angle = cv2.fitEllipse(cnt)  
+    preangle = 0
+    preMA = 0
+    prema = 0
+    multiFrameAngle2 = []
+    frameThres = 20
+
+    tAngle = 0.2
+    if (len(multiFrameAngle2) < frameThres):
+        if (fingerCount ==2):
+            multiFrameAngle2.append(angle)
+    elif (len(multiFrameAngle2) == frameThres):
+        if (fingerCount ==2):
+            preangle = angle
+            preMA = MA
+            prema = ma
+            averageAngle =np.average(multiFrameAngle2)
+   
+        if preangle in (14,17) and preMA/prema in(0.7,0.75):
+            if angle in (80,85) and MA/ma in(0.55,0.6):
+                pyautogui.press('F12')  
+                cv2.putText(final, "Volume Up" , 
+                                (50,300), font, 0.8, (255, 255, 0), 2)
+            
+            elif angle in (25,35) and MA/ma in(0.3,0.35):
+                pyautogui.hotkey('F11')  
+                cv2.putText(final, "Volume Down" , 
+                                (50,300), font, 0.8, (255, 255, 0), 2)
     
+    '''
     
-    #3.
-    
-    #4. 
+    #4. Bethany
     
     
     
