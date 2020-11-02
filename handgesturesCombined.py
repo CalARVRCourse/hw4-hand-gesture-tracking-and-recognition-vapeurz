@@ -468,8 +468,10 @@ while True:
         cv2.putText(thresholdedHandImage, "finger count = %d" %(fingerCount), 
                                     (50,100), font, 1.0, (255, 255, 255), 2)
     elif(fingerCount==0):
-        #print ("ratio = %f" %(ratio))
-        if ratio > 0.1:
+        print ("ratio = %f" %(ratio))
+        #this ratio number varies between people, some of them for 1 gesture is 0.17, but some is larger than 0.2
+        #use print to console
+        if ratio > 0.1:     
             cv2.putText(thresholdedHandImage, "finger count = %d" %(1), 
                                     (50,100), font, 1.0, (255, 255, 255), 2)
         else:
